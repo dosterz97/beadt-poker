@@ -1,12 +1,6 @@
+import { cardSvgSrc, CARD_BACK_SRC } from "@/lib/card-assets";
 import { formatRank } from "@/lib/deck";
 import type { Card } from "@/lib/types";
-
-const SUIT_SYMBOL: Record<Card["suit"], string> = {
-  hearts: "♥",
-  diamonds: "♦",
-  clubs: "♣",
-  spades: "♠",
-};
 
 export function PlayingCard({
   card,
@@ -24,13 +18,6 @@ export function PlayingCard({
   delayMs?: number;
   className?: string;
 }) {
-  const dims =
-    size === "sm"
-      ? "w-9 h-[3.25rem] text-[0.65rem]"
-      : size === "lg"
-        ? "w-14 h-20 text-sm"
-        : "w-11 h-16 text-xs";
-
   const animClass =
     animate === "deal"
       ? "card-animate-deal"
@@ -39,39 +26,25 @@ export function PlayingCard({
         : "";
 
   const delayStyle = delayMs ? { animationDelay: `${delayMs}ms` } : undefined;
-
-  if (faceDown || !card) {
-    return (
-      <div
-        className={`playing-card ${dims} card-back rounded-md shadow-md border border-black/20 ${animClass} ${className}`}
-        style={delayStyle}
-        aria-label="Face-down card"
-      />
-    );
-  }
-
-  const red = card.suit === "hearts" || card.suit === "diamonds";
+  const sizeClass = `card-size-${size}`;
+  const showBack = faceDown || !card;
+  const src = showBack ? CARD_BACK_SRC : cardSvgSrc(card);
+  const label = showBack
+    ? "Face-down card"
+    : `${formatRank(card.rank)} of ${card.suit}`;
 
   return (
     <div
-      className={`playing-card playing-card-face ${dims} relative rounded-md bg-[var(--card-face)] shadow-md border border-black/10 flex flex-col justify-between p-1 select-none ${animClass} ${className}`}
-      style={{
-        ...delayStyle,
-        color: red ? "var(--suit-red)" : "var(--suit-black)",
-      }}
-      aria-label={`${formatRank(card.rank)} of ${card.suit}`}
+      className={`playing-card svg-card ${sizeClass} ${animClass} ${className}`}
+      style={delayStyle}
     >
-      <div className="leading-none font-semibold">
-        <div>{formatRank(card.rank)}</div>
-        <div className="-mt-0.5">{SUIT_SYMBOL[card.suit]}</div>
-      </div>
-      <div className="self-center text-lg leading-none opacity-90">
-        {SUIT_SYMBOL[card.suit]}
-      </div>
-      <div className="leading-none font-semibold rotate-180 self-end">
-        <div>{formatRank(card.rank)}</div>
-        <div className="-mt-0.5">{SUIT_SYMBOL[card.suit]}</div>
-      </div>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={src}
+        alt={label}
+        draggable={false}
+        className="svg-card-img"
+      />
     </div>
   );
 }

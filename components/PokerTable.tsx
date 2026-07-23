@@ -6,23 +6,32 @@ import { PlayingCard } from "./PlayingCard";
 import { ActionBar } from "./ActionBar";
 import { WinnerCelebration } from "./WinnerCelebration";
 
-/** Opponent seats sit on a tighter ellipse so cards stay inside the rail. */
+/** Opponent seats on the top arc; hero is rendered separately below the felt. */
 function seatPosition(
   index: number,
   total: number,
 ): { left: string; top: string } {
+  // index 0 is hero — not placed on the felt
   if (index === 0) {
     return { left: "50%", top: "88%" };
   }
 
   const others = total - 1;
   const slot = index - 1;
-  const start = Math.PI * 0.95;
-  const end = Math.PI * 0.05;
-  const t = others === 1 ? 0.5 : slot / (others - 1);
+
+  // Heads-up: sit directly across the table
+  if (others === 1) {
+    return { left: "50%", top: "14%" };
+  }
+
+  // Spread remaining opponents across the upper arc (left → right).
+  // Angles ~1.15π…1.85π keep sin negative so CSS y stays near the top.
+  const start = Math.PI * 1.15;
+  const end = Math.PI * 1.85;
+  const t = slot / (others - 1);
   const angle = start + (end - start) * t;
-  const x = 50 + 34 * Math.cos(angle);
-  const y = 48 + 30 * Math.sin(angle);
+  const x = 50 + 36 * Math.cos(angle);
+  const y = 46 + 32 * Math.sin(angle);
   return { left: `${x}%`, top: `${y}%` };
 }
 
@@ -284,9 +293,9 @@ export function PokerTable({
           winners={game?.street === "showdown" ? game.winners : null}
           getLayout={getWinnerLayout}
         />
-      </div>
 
-      {error && <p className="error-banner">{error}</p>}
+        {error && <p className="table-error">{error}</p>}
+      </div>
 
       <ActionBar
         legal={

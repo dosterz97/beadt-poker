@@ -36,41 +36,6 @@ export function ActionBar({
     }
   }, [legal?.canRaise, legal?.minRaiseTo, legal?.maxRaiseTo]);
 
-  if (!legal) return null;
-
-  if (legal.canDealNext) {
-    return (
-      <div className="action-bar">
-        <button
-          className="btn btn-primary btn-action-main"
-          disabled={disabled || busy}
-          onClick={async () => {
-            setBusy(true);
-            await onAction({ type: "ready-next" });
-            setBusy(false);
-          }}
-        >
-          Deal next hand
-        </button>
-      </div>
-    );
-  }
-
-  const hasTurn =
-    legal.canFold ||
-    legal.canCheck ||
-    legal.canCall ||
-    legal.canRaise ||
-    legal.canAllIn;
-
-  if (!hasTurn) {
-    return (
-      <div className="action-bar waiting">
-        <span>Waiting for other players…</span>
-      </div>
-    );
-  }
-
   const raiseValue =
     typeof raiseTo === "number" ? raiseTo : min || Math.ceil((min + max) / 2);
 
@@ -80,55 +45,88 @@ export function ActionBar({
     setBusy(false);
   };
 
+  const hasTurn = Boolean(
+    legal &&
+      (legal.canFold ||
+        legal.canCheck ||
+        legal.canCall ||
+        legal.canRaise ||
+        legal.canAllIn),
+  );
+
+  const canDealNext = Boolean(legal?.canDealNext);
+  const showBet = Boolean(legal && (legal.canRaise || legal.canAllIn));
+
   return (
-    <div className="action-bar">
-      <div className="action-bar-main">
-        {legal.canFold && (
-          <button
-            className="btn btn-fold"
-            disabled={disabled || busy}
-            onClick={() => act({ type: "fold" })}
-          >
-            Fold
-          </button>
-        )}
-
-        {legal.canCheck && (
-          <button
-            className="btn btn-check"
-            disabled={disabled || busy}
-            onClick={() => act({ type: "check" })}
-          >
-            Check
-          </button>
-        )}
-
-        {legal.canCall && (
-          <button
-            className="btn btn-call"
-            disabled={disabled || busy}
-            onClick={() => act({ type: "call" })}
-          >
-            Call {legal.callAmount}
-          </button>
-        )}
-      </div>
-
-      {(legal.canRaise || legal.canAllIn) && (
-        <div className="action-bar-bet">
-          {legal.canRaise && (
-            <div className="raise-group">
-              <label className="raise-label">
-                Raise to
-                <input
-                  type="range"
-                  min={min}
-                  max={max}
-                  value={Math.min(Math.max(raiseValue, min), max)}
-                  onChange={(e) => setRaiseTo(Number(e.target.value))}
+    <div className="action-dock" aria-live="polite">
+      <div
+        className={`action-bar ${!legal || (!hasTurn && !canDealNext) ? "waiting" : ""}`}
+      >
+        <div className="action-bar-main">
+          {!legal && <span className="action-waiting-msg" />}
+          {legal && canDealNext && (
+            <button
+              className="btn btn-primary btn-action-main"
+              disabled={disabled || busy}
+              onClick={async () => {
+                setBusy(true);
+                await onAction({ type: "ready-next" });
+                setBusy(false);
+              }}
+            >
+              Deal next hand
+            </button>
+          )}
+          {legal && !canDealNext && hasTurn && (
+            <>
+              {legal.canFold && (
+                <button
+                  className="btn btn-fold"
                   disabled={disabled || busy}
-                />
-              </label>
+                  onClick={() => act({ type: "fold" })}
+                >
+                  Fold
+                </button>
+              )}
+              {legal.canCheck && (
+                <button
+                  className="btn btn-check"
+                  disabled={disabled || busy}
+                  onClick={() => act({ type: "check" })}
+                >
+                  Check
+                </button>
+              )}
+              {legal.canCall && (
+                <button
+                  className="btn btn-call"
+                  disabled={disabled || busy}
+                  onClick={() => act({ type: "call" })}
+                >
+                  Call {legal.callAmount}
+                </button>
+              )}
+            </>
+          )}
+          {legal && !canDealNext && !hasTurn && (
+            <span className="action-waiting-msg">
+              Waiting for other players…
+            </span>
+          )}
+        </div>
+
+        <div className={`action-bar-bet ${showBet ? "" : "is-idle"}`}>
+          {showBet && legal?.canRaise && (
+            <div className="raise-group">
+              <input
+                type="range"
+                min={min}
+                max={max}
+                value={Math.min(Math.max(raiseValue, min), max)}
+                onChange={(e) => setRaiseTo(Number(e.target.value))}
+                disabled={disabled || busy}
+                aria-label="Raise amount"
+              />
               <input
                 type="number"
                 className="raise-input"
@@ -139,6 +137,7 @@ export function ActionBar({
                   setRaiseTo(e.target.value === "" ? "" : Number(e.target.value))
                 }
                 disabled={disabled || busy}
+                aria-label="Raise to"
               />
               <button
                 className="btn btn-raise"
@@ -149,7 +148,7 @@ export function ActionBar({
               </button>
             </div>
           )}
-          {legal.canAllIn && (
+          {showBet && legal?.canAllIn && (
             <button
               className="btn btn-danger btn-allin"
               disabled={disabled || busy}
@@ -159,7 +158,7 @@ export function ActionBar({
             </button>
           )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

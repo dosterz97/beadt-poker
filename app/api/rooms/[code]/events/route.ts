@@ -1,4 +1,4 @@
-import { getRoom, subscribe } from "@/lib/room-store";
+import { getLegalActions, getRoom, subscribe } from "@/lib/room-store";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -35,7 +35,11 @@ export async function GET(request: Request, ctx: Ctx) {
       };
 
       cleanup = subscribe(code, viewerId, (publicRoom) => {
-        send({ type: "room", room: publicRoom });
+        send({
+          type: "room",
+          room: publicRoom,
+          legal: viewerId ? getLegalActions(code, viewerId) : null,
+        });
       });
 
       heartbeat = setInterval(() => {

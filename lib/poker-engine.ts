@@ -493,60 +493,7 @@ export function applyAction(
   return { ok: true };
 }
 
-export function legalActions(
-  room: Room,
-  playerId: string,
-): {
-  canFold: boolean;
-  canCheck: boolean;
-  canCall: boolean;
-  callAmount: number;
-  canRaise: boolean;
-  minRaiseTo: number;
-  maxRaiseTo: number;
-  canAllIn: boolean;
-  canDealNext: boolean;
-} {
-  const empty = {
-    canFold: false,
-    canCheck: false,
-    canCall: false,
-    callAmount: 0,
-    canRaise: false,
-    minRaiseTo: 0,
-    maxRaiseTo: 0,
-    canAllIn: false,
-    canDealNext: false,
-  };
-
-  const game = room.game;
-  if (!game) return empty;
-
-  if (game.street === "showdown") {
-    return { ...empty, canDealNext: true };
-  }
-
-  const player = room.players.find((p) => p.id === playerId);
-  if (!player || game.actingSeat !== player.seat || !canAct(player)) {
-    return empty;
-  }
-
-  const toCall = game.currentBet - player.bet;
-  const minRaiseTo = game.currentBet + game.minRaise;
-  const maxRaiseTo = player.bet + player.chips;
-
-  return {
-    canFold: true,
-    canCheck: toCall === 0,
-    canCall: toCall > 0 && player.chips > 0,
-    callAmount: Math.min(toCall, player.chips),
-    canRaise: maxRaiseTo > game.currentBet && player.chips > toCall,
-    minRaiseTo: Math.min(minRaiseTo, maxRaiseTo),
-    maxRaiseTo,
-    canAllIn: player.chips > 0,
-    canDealNext: false,
-  };
-}
+export { computeLegalActions as legalActions } from "./legal";
 
 export function revealCardsForShowdown(cards: Card[] | null, reveal: boolean): Card[] | null {
   if (!cards) return null;

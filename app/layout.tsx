@@ -20,6 +20,12 @@ export const metadata: Metadata = {
     "Create or join a Texas Hold'em table instantly. No accounts — just share a room code and deal.",
 };
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  viewportFit: "cover" as const,
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
